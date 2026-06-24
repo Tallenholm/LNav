@@ -1,6 +1,39 @@
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import { Waypoint, TruckProfile, RoutingOptions } from '../types';
-import { Plus, Trash2, ShieldAlert, Navigation, Settings2, Route as RouteIcon, Map as MapIcon } from 'lucide-react';
+import { Plus, Trash2, Truck, Navigation2, Sparkles } from 'lucide-react';
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 ${
+        checked ? 'bg-emerald-500' : 'bg-slate-200'
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">{children}</span>
+      <div className="flex-1 h-px bg-slate-100" />
+    </div>
+  );
+}
+
+function FieldLabel({ children }: { children: ReactNode }) {
+  return <label className="block text-xs font-medium text-slate-600">{children}</label>;
+}
 
 interface Props {
   waypoints: Waypoint[];
@@ -13,20 +46,19 @@ interface Props {
   isAnalyzing: boolean;
 }
 
-export default function Sidebar({ 
-  waypoints, 
-  setWaypoints, 
-  truckProfile, 
-  setTruckProfile, 
+export default function Sidebar({
+  waypoints,
+  setWaypoints,
+  truckProfile,
+  setTruckProfile,
   routingOptions,
   setRoutingOptions,
-  onOptimize, 
-  isAnalyzing 
+  onOptimize,
+  isAnalyzing,
 }: Props) {
-  
   const addWaypoint = () => {
     if (waypoints.length >= 150) {
-      alert("Maximum of 150 stops reached.");
+      alert('Maximum of 150 stops reached.');
       return;
     }
     setWaypoints([...waypoints, { id: Date.now().toString(), address: '' }]);
@@ -37,213 +69,217 @@ export default function Sidebar({
   };
 
   const updateWaypoint = (id: string, address: string) => {
-    setWaypoints(waypoints.map(w => w.id === id ? { ...w, address } : w));
+    setWaypoints(waypoints.map(w => (w.id === id ? { ...w, address } : w)));
   };
 
-  const isOptimizeDisabled = waypoints.length < 2 || waypoints.some(w => !w.address) || isAnalyzing;
+  const isDisabled = waypoints.length < 2 || waypoints.some(w => !w.address.trim()) || isAnalyzing;
 
   const launchNavigation = () => {
-    const validWaypoints = waypoints.filter(w => w.address.trim() !== '');
-    if (validWaypoints.length < 2) return;
-    
-    const origin = encodeURIComponent(validWaypoints[0].address);
-    const destination = encodeURIComponent(validWaypoints[validWaypoints.length - 1].address);
-    
+    const valid = waypoints.filter(w => w.address.trim());
+    if (valid.length < 2) return;
+    const origin = encodeURIComponent(valid[0].address);
+    const destination = encodeURIComponent(valid[valid.length - 1].address);
     let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
-    
-    if (validWaypoints.length > 2) {
-      const waypointsStr = validWaypoints.slice(1, -1).map(w => encodeURIComponent(w.address)).join('|');
-      url += `&waypoints=${waypointsStr}`;
+    if (valid.length > 2) {
+      const mid = valid.slice(1, -1).map(w => encodeURIComponent(w.address)).join('|');
+      url += `&waypoints=${mid}`;
     }
-    
-    // Note: avoidHighways and avoidTolls are also supported by Google Maps Deep Linking
     if (routingOptions.avoidHighways || routingOptions.avoidTolls) {
       const avoids = [];
       if (routingOptions.avoidHighways) avoids.push('hwy');
       if (routingOptions.avoidTolls) avoids.push('tolls');
       url += `&dir_action=navigate&avoid=${avoids.join(',')}`;
     }
-    
     window.open(url, '_blank');
   };
 
   return (
-    <div className="relative w-full md:w-[380px] bg-white/95 backdrop-blur-2xl md:rounded-3xl border-t md:border border-slate-200/60 h-[55vh] md:h-full flex flex-col shadow-2xl shadow-slate-900/20 z-20 overflow-hidden pointer-events-auto transition-all">
-      <div className="p-4 md:p-5 border-b border-slate-200/50 bg-slate-950/5 backdrop-blur-sm text-slate-900 shrink-0">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="p-2 bg-emerald-500 rounded-lg shadow-lg shadow-emerald-500/20">
-            <Navigation className="w-5 h-5 text-white" />
+    <div className="w-full md:w-[400px] bg-white md:rounded-2xl md:border md:border-slate-100 h-[62vh] md:h-full flex flex-col shadow-[0_-12px_40px_-4px_rgba(0,0,0,0.18)] md:shadow-2xl md:shadow-black/20 overflow-hidden">
+      {/* Mobile drag handle */}
+      <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
+        <div className="w-9 h-1 bg-slate-200 rounded-full" />
+      </div>
+
+      {/* Header */}
+      <div className="px-5 py-4 shrink-0 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+            <Truck className="w-[18px] h-[18px] text-emerald-400" />
           </div>
-          <h1 className="text-lg md:text-xl font-bold tracking-tight text-slate-900">Crew Logistics</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[15px] font-bold tracking-tight text-slate-900 leading-tight">Crew Logistics</h1>
+            <p className="text-[11px] text-slate-400 font-medium leading-tight mt-0.5">Heavy equipment residential access</p>
+          </div>
+          <span className="shrink-0 text-[11px] font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
+            {waypoints.length} / 150
+          </span>
         </div>
-        <p className="text-slate-500 text-xs font-medium ml-11">Heavy equipment residential access</p>
       </div>
 
-      <div className="p-4 md:p-5 flex-1 overflow-y-auto space-y-6 md:space-y-8 no-scrollbar">
-        {/* Truck Profile Section */}
-        <section>
-          <div className="flex items-center gap-2 mb-3 md:mb-4 font-semibold text-slate-800 border-b border-slate-100 pb-2">
-            <Settings2 className="w-4 h-4 text-slate-500" />
-            <h3 className="text-sm md:text-base">Crew Vehicle Specs</h3>
-          </div>
-          <div className="space-y-3 md:space-y-4">
-            <div>
-              <label className="block text-[10px] md:text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Vehicle Classification</label>
-              <select 
-                value={truckProfile.class}
-                onChange={e => setTruckProfile({...truckProfile, class: e.target.value})}
-                className="w-full text-sm p-2 border border-slate-200 rounded-md bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-              >
-                <option>Class 8 (Heavy Duty Dump/Flatbed)</option>
-                <option>Class 7 (Heavy Duty)</option>
-                <option>Class 6 (Medium Duty w/ Trailer)</option>
-                <option>Class 4-5 (Medium Duty)</option>
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-              <div>
-                <label className="block text-[10px] md:text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Height Clearance</label>
-                <input 
-                  type="text" 
-                  value={truckProfile.height}
-                  onChange={e => setTruckProfile({...truckProfile, height: e.target.value})}
-                  className="w-full text-sm p-2 border border-slate-200 rounded-md bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                  placeholder="13 ft 6 in"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] md:text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Gross Weight</label>
-                <input 
-                  type="text" 
-                  value={truckProfile.weight}
-                  onChange={e => setTruckProfile({...truckProfile, weight: e.target.value})}
-                  className="w-full text-sm p-2 border border-slate-200 rounded-md bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                  placeholder="80,000 lbs"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="p-5 space-y-6">
 
-        {/* Routing Options Section */}
-        <section>
-          <div className="flex items-center gap-2 mb-3 md:mb-4 font-semibold text-slate-800 border-b border-slate-100 pb-2">
-            <RouteIcon className="w-4 h-4 text-slate-500" />
-            <h3 className="text-sm md:text-base">Routing Preferences</h3>
-          </div>
-          <div className="space-y-3">
-            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={routingOptions.avoidTolls}
-                onChange={e => setRoutingOptions({...routingOptions, avoidTolls: e.target.checked})}
-                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-              />
-              Avoid Tolls
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={routingOptions.avoidHighways}
-                onChange={e => setRoutingOptions({...routingOptions, avoidHighways: e.target.checked})}
-                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-              />
-              Avoid Highways
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={routingOptions.optimizeRoute}
-                onChange={e => setRoutingOptions({...routingOptions, optimizeRoute: e.target.checked})}
-                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-              />
-              Optimize Waypoint Order
-            </label>
-          </div>
-        </section>
-
-        {/* Waypoints Section */}
-        <section>
-          <div className="flex items-center justify-between mb-3 md:mb-4 border-b border-slate-100 pb-2">
-            <div className="flex items-center gap-2 font-semibold text-slate-800">
-              <ShieldAlert className="w-4 h-4 text-slate-500" />
-              <h3 className="text-sm md:text-base">Job Sites</h3>
-            </div>
-            <div className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
-              {waypoints.length} / 150
-            </div>
-          </div>
-          
-          <div className="space-y-2 md:space-y-3">
-            {waypoints.map((waypoint, index) => (
-              <div key={waypoint.id} className="flex items-start gap-2 group">
-                <div className="relative pt-2">
-                  <div className="w-5 h-5 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center z-10 text-[10px] font-bold text-slate-500">
-                    {index + 1}
-                  </div>
-                  {index < waypoints.length - 1 && (
-                    <div className="absolute top-7 left-1/2 -ml-[1px] w-[2px] h-full bg-slate-200 -z-0"></div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex gap-1 md:gap-2">
-                    <input 
-                      type="text" 
-                      value={waypoint.address}
-                      onChange={e => updateWaypoint(waypoint.id, e.target.value)}
-                      placeholder={index === 0 ? "Dispatch Center (Origin)" : index === waypoints.length - 1 ? "Final Stop / Return" : "Job Site Address"}
-                      className="flex-1 text-sm p-2 bg-white border border-slate-200 rounded-md focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-sm group-hover:border-slate-300"
-                    />
-                    {waypoints.length > 2 && (
-                      <button 
-                        onClick={() => removeWaypoint(waypoint.id)}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0"
-                        title="Remove job site"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+          {/* Vehicle Specs */}
+          <section>
+            <SectionLabel>Vehicle Specs</SectionLabel>
+            <div className="space-y-3 mt-3">
+              <div>
+                <FieldLabel>Vehicle Class</FieldLabel>
+                <div className="relative mt-1.5">
+                  <select
+                    value={truckProfile.class}
+                    onChange={e => setTruckProfile({ ...truckProfile, class: e.target.value })}
+                    className="w-full appearance-none text-sm py-2.5 pl-3 pr-9 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                  >
+                    <option>Class 8 (Heavy Duty Dump/Flatbed)</option>
+                    <option>Class 7 (Heavy Duty)</option>
+                    <option>Class 6 (Medium Duty w/ Trailer)</option>
+                    <option>Class 4-5 (Medium Duty)</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <FieldLabel>Height Clearance</FieldLabel>
+                  <input
+                    type="text"
+                    value={truckProfile.height}
+                    onChange={e => setTruckProfile({ ...truckProfile, height: e.target.value })}
+                    placeholder="13 ft 6 in"
+                    className="mt-1.5 w-full text-sm py-2.5 px-3 border border-slate-200 rounded-xl bg-white text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <FieldLabel>Gross Weight</FieldLabel>
+                  <input
+                    type="text"
+                    value={truckProfile.weight}
+                    onChange={e => setTruckProfile({ ...truckProfile, weight: e.target.value })}
+                    placeholder="80,000 lbs"
+                    className="mt-1.5 w-full text-sm py-2.5 px-3 border border-slate-200 rounded-xl bg-white text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
 
-          <button 
-            onClick={addWaypoint}
-            className="mt-3 md:mt-4 w-full py-2.5 flex items-center justify-center gap-2 text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 border-dashed rounded-md hover:bg-slate-100 hover:text-emerald-600 hover:border-emerald-300 transition-all uppercase tracking-wider"
-          >
-            <Plus className="w-4 h-4" />
-            Add Job Site
-          </button>
-        </section>
+          {/* Routing Preferences */}
+          <section>
+            <SectionLabel>Routing Preferences</SectionLabel>
+            <div className="mt-1 divide-y divide-slate-50">
+              {([
+                { key: 'avoidTolls' as const, label: 'Avoid Tolls', desc: 'Skip toll roads and bridges' },
+                { key: 'avoidHighways' as const, label: 'Avoid Highways', desc: 'Prefer local and arterial roads' },
+                { key: 'optimizeRoute' as const, label: 'Optimize Stop Order', desc: 'Reorder waypoints for efficiency' },
+              ]).map(({ key, label, desc }) => (
+                <div key={key} className="flex items-center justify-between py-3 gap-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-800 leading-tight">{label}</p>
+                    <p className="text-[11px] text-slate-400 leading-tight mt-0.5">{desc}</p>
+                  </div>
+                  <Toggle
+                    checked={routingOptions[key]}
+                    onChange={v => setRoutingOptions({ ...routingOptions, [key]: v })}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Job Sites */}
+          <section>
+            <SectionLabel>Job Sites</SectionLabel>
+            <div className="mt-3">
+              {waypoints.map((waypoint, index) => {
+                const isFirst = index === 0;
+                const isLast = index === waypoints.length - 1;
+                const dotClass = isFirst
+                  ? 'bg-emerald-500 ring-4 ring-emerald-100'
+                  : isLast
+                  ? 'bg-rose-500 ring-4 ring-rose-100'
+                  : 'bg-amber-400 ring-4 ring-amber-100';
+
+                return (
+                  <div key={waypoint.id} className="flex gap-3 group">
+                    {/* Connector column */}
+                    <div className="flex flex-col items-center shrink-0 w-4 pt-3.5">
+                      <div className={`w-3 h-3 rounded-full shrink-0 ${dotClass}`} />
+                      {!isLast && <div className="w-px flex-1 bg-slate-200 my-1 min-h-[8px]" />}
+                    </div>
+
+                    {/* Input */}
+                    <div className="flex-1 pb-2 flex items-start gap-1.5 pt-1.5 min-w-0">
+                      <input
+                        type="text"
+                        value={waypoint.address}
+                        onChange={e => updateWaypoint(waypoint.id, e.target.value)}
+                        placeholder={
+                          isFirst
+                            ? 'Origin / Dispatch Center'
+                            : isLast
+                            ? 'Final Destination'
+                            : `Stop ${index}`
+                        }
+                        className="flex-1 min-w-0 text-sm py-2.5 px-3 border border-slate-200 rounded-xl bg-white text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all shadow-sm"
+                      />
+                      {waypoints.length > 2 && (
+                        <button
+                          onClick={() => removeWaypoint(waypoint.id)}
+                          className="mt-0.5 p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          title="Remove stop"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={addWaypoint}
+              className="mt-1 w-full py-2.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition-all"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Stop
+            </button>
+          </section>
+        </div>
       </div>
 
-      <div className="shrink-0 p-4 md:p-5 border-t border-slate-200/50 bg-white/50 backdrop-blur-md flex flex-col gap-2">
-        <button 
+      {/* Action buttons */}
+      <div className="shrink-0 px-4 py-4 md:px-5 md:py-5 border-t border-slate-100 bg-white space-y-2.5">
+        <button
           onClick={onOptimize}
-          disabled={isOptimizeDisabled}
-          className="w-full relative overflow-hidden bg-slate-900 text-white font-medium py-3 px-4 rounded-xl shadow-lg shadow-slate-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:-translate-y-0.5 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-slate-500 flex justify-center items-center gap-2 text-sm"
+          disabled={isDisabled}
+          className="w-full bg-slate-900 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-slate-900/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:bg-slate-800 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-slate-700 flex justify-center items-center gap-2 text-sm"
         >
           {isAnalyzing ? (
             <>
-              <div className="w-4 h-4 border-2 border-slate-400 border-t-white rounded-full animate-spin" />
-              <span>Analyzing Route & Access...</span>
+              <div className="w-4 h-4 border-2 border-slate-600 border-t-white rounded-full animate-spin" />
+              Analyzing Route...
             </>
           ) : (
             <>
-              <ShieldAlert className="w-4 h-4 text-emerald-400" />
-              <span>Preview & Analyze Map Route</span>
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              Analyze with AI
             </>
           )}
         </button>
-        <button 
+        <button
           onClick={launchNavigation}
-          disabled={isOptimizeDisabled}
-          className="w-full relative overflow-hidden bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 flex justify-center items-center gap-2 text-sm"
+          disabled={isDisabled}
+          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500 flex justify-center items-center gap-2 text-sm"
         >
-          <MapIcon className="w-4 h-4" />
-          <span>Launch Turn-by-Turn Nav</span>
+          <Navigation2 className="w-4 h-4" />
+          Launch Navigation
         </button>
       </div>
     </div>

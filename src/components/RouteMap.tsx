@@ -26,14 +26,14 @@ function RoutePolyline({ waypoints, truckProfile, routingOptions }: { waypoints:
     const destination = validWaypoints[validWaypoints.length - 1].address;
     
     // intermediates max is 25 for standard computeRoutes request
-    const intermediates = validWaypoints.slice(1, -1).slice(0, 23).map(w => ({
+    const intermediates: { address: string }[] = validWaypoints.slice(1, -1).slice(0, 23).map(w => ({
       address: w.address
     }));
 
     routesLib.Route.computeRoutes({
       origin,
       destination,
-      intermediates: intermediates.length > 0 ? intermediates : undefined,
+      intermediates: intermediates.length > 0 ? (intermediates as any) : undefined,
       travelMode: 'DRIVING',
       routingPreference: 'TRAFFIC_AWARE_OPTIMAL',
       routeModifiers: {

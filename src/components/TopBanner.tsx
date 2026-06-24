@@ -1,5 +1,20 @@
 import type { AIAnalysis } from '../types';
-import { ShieldAlert, Info, Droplet, TriangleAlert } from 'lucide-react';
+import { Sparkles, Droplet, Info, TriangleAlert, CheckCircle2 } from 'lucide-react';
+
+const SEVERITY = {
+  HIGH: {
+    border: 'border-l-rose-500',
+    badge: 'bg-rose-500/15 text-rose-400 border border-rose-500/25',
+  },
+  MEDIUM: {
+    border: 'border-l-amber-400',
+    badge: 'bg-amber-400/15 text-amber-400 border border-amber-400/25',
+  },
+  LOW: {
+    border: 'border-l-sky-400',
+    badge: 'bg-sky-400/15 text-sky-400 border border-sky-400/25',
+  },
+} as const;
 
 interface Props {
   aiAnalysis: AIAnalysis | null;
@@ -9,11 +24,14 @@ interface Props {
 export default function TopBanner({ aiAnalysis, isAnalyzing }: Props) {
   if (isAnalyzing) {
     return (
-      <div className="absolute top-4 left-4 right-4 z-10 mx-auto max-w-5xl">
-        <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-2xl flex items-center justify-center">
-          <div className="flex items-center gap-3 text-emerald-500">
-            <div className="w-5 h-5 border-2 border-emerald-500 border-t-white rounded-full animate-spin" />
-            <span className="font-mono text-sm tracking-wide">AI Computing site access and routing path...</span>
+      <div className="p-3 md:p-4">
+        <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-3.5 shadow-2xl flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+            <div className="w-3.5 h-3.5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+          </div>
+          <div>
+            <p className="text-white font-semibold text-sm leading-tight">Analyzing Route</p>
+            <p className="text-slate-400 text-xs mt-0.5">AI computing site access and routing path...</p>
           </div>
         </div>
       </div>
@@ -22,80 +40,91 @@ export default function TopBanner({ aiAnalysis, isAnalyzing }: Props) {
 
   if (!aiAnalysis) return null;
 
+  const highCount = aiAnalysis.hazards.filter(h => h.severity === 'HIGH').length;
+  const medCount = aiAnalysis.hazards.filter(h => h.severity === 'MEDIUM').length;
+
   return (
-    <div className="absolute top-4 left-4 right-4 xl:right-8 z-10 mx-auto max-w-4xl animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col">
+    <div className="p-3 md:p-4">
+      <div className="bg-slate-900/85 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] overflow-hidden">
+
         {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-white/5">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-emerald-500/20 rounded-md border border-emerald-500/30">
-              <ShieldAlert className="w-5 h-5 text-emerald-400" />
+        <div className="px-4 md:px-5 py-3 flex items-center justify-between border-b border-white/5 bg-white/[0.03]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/25 flex items-center justify-center shrink-0">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             </div>
-            <h2 className="text-white font-semibold tracking-tight text-lg">AI Logistics Analysis</h2>
+            <span className="text-white font-semibold text-sm tracking-tight">AI Route Analysis</span>
           </div>
-          <div className="flex items-center gap-2 text-[11px] font-medium tracking-widest text-slate-300 uppercase">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)] animate-pulse"></span>
-            Active Monitoring
+          <div className="flex items-center gap-2">
+            {highCount > 0 && (
+              <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full">
+                {highCount} HIGH
+              </span>
+            )}
+            {medCount > 0 && (
+              <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                {medCount} MED
+              </span>
+            )}
+            <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" />
+              Live
+            </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-h-[40vh] md:max-h-[80vh] overflow-y-auto no-scrollbar">
-          
-          {/* Hazards */}
-          <div className="col-span-1 md:col-span-2 space-y-4">
-             <div className="flex items-center gap-2 text-slate-300">
-               <TriangleAlert className="w-4 h-4 text-rose-400" />
-               <h3 className="text-sm uppercase tracking-wider font-semibold">Route Hazard Warnings</h3>
-             </div>
-             {aiAnalysis.hazards.length === 0 ? (
-               <div className="text-slate-500 text-sm italic">No significant hazards identified on this route.</div>
-             ) : (
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                 {aiAnalysis.hazards.map((hazard, i) => (
-                   <div key={i} className="bg-slate-900 border border-slate-800 rounded-lg p-3 relative overflow-hidden flex flex-col justify-between">
-                     <div className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rounded-full opacity-10 filter blur-xl ${
-                       hazard.severity === 'HIGH' ? 'bg-rose-500' : hazard.severity === 'MEDIUM' ? 'bg-amber-500' : 'bg-blue-500'
-                     }`}></div>
-                     <div>
-                       <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mb-2 tracking-wide ${
-                         hazard.severity === 'HIGH' ? 'bg-rose-500/20 text-rose-400' : 
-                         hazard.severity === 'MEDIUM' ? 'bg-amber-500/20 text-amber-400' : 
-                         'bg-sky-500/20 text-sky-400'
-                       }`}>
-                         {hazard.severity} • {hazard.type}
-                       </span>
-                       <p className="text-slate-300 text-sm leading-relaxed">{hazard.description}</p>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-             )}
+        {/* Body */}
+        <div className="p-4 md:p-5 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 max-h-[38vh] md:max-h-[50vh] overflow-y-auto no-scrollbar">
+
+          {/* Hazards — 2/3 columns on desktop */}
+          <div className="md:col-span-2 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <TriangleAlert className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Route Hazards</span>
+            </div>
+            {aiAnalysis.hazards.length === 0 ? (
+              <div className="flex items-center gap-2 text-slate-400 py-1">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="text-sm">No significant hazards identified on this route.</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {aiAnalysis.hazards.map((hazard, i) => {
+                  const s = SEVERITY[hazard.severity];
+                  return (
+                    <div key={i} className={`bg-white/5 border border-white/5 border-l-2 rounded-lg p-3 ${s.border}`}>
+                      <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mb-2 ${s.badge}`}>
+                        {hazard.severity} · {hazard.type}
+                      </span>
+                      <p className="text-slate-300 text-xs leading-relaxed">{hazard.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Fuel & Advice */}
-          <div className="space-y-6 md:border-l border-slate-800 md:pl-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-slate-300">
-                <Droplet className="w-4 h-4 text-sky-400" />
-                <h3 className="text-sm uppercase tracking-wider font-semibold">Fuel Strategy</h3>
+          {/* Fuel & Advisory — 1/3 column on desktop */}
+          <div className="space-y-4 md:border-l md:border-white/5 md:pl-5">
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Droplet className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fuel Strategy</span>
               </div>
-              <p className="text-slate-400 text-sm leading-relaxed bg-slate-900/50 p-3 rounded-lg border border-slate-800/50">
+              <p className="text-slate-300 text-xs leading-relaxed bg-white/5 rounded-lg p-3">
                 {aiAnalysis.fuelOptimization}
               </p>
             </div>
-            
-            <div className="space-y-2">
-               <div className="flex items-center gap-2 text-slate-300">
-                <Info className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm uppercase tracking-wider font-semibold">Driver Advisory</h3>
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Info className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Driver Advisory</span>
               </div>
-              <p className="text-slate-400 text-sm leading-relaxed">
+              <p className="text-slate-300 text-xs leading-relaxed">
                 {aiAnalysis.overallAdvice}
               </p>
             </div>
           </div>
-
         </div>
       </div>
     </div>
