@@ -1,0 +1,6 @@
+{
+  "name": "Restoration Crew Logistics",
+  "description": "Multi-platform route mapping and logistics app for residential ground restoration crews. Up to 150 job sites, low-bridge warnings, equipment parking logic.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
